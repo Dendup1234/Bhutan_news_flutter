@@ -1,22 +1,23 @@
 import 'package:flutter/material.dart';
-import 'package:bhutan_news_app_flutter/home.dart'; // Import the Home widget
+import 'dart:async';
+import 'package:bhutan_news_app_flutter/main_screen.dart'; // Import the MainScreen
 
 class SplashScreen extends StatefulWidget {
   const SplashScreen({Key? key}) : super(key: key);
 
   @override
-  State<SplashScreen> createState() => _SplashScreenState();
+  _SplashScreenState createState() => _SplashScreenState();
 }
 
 class _SplashScreenState extends State<SplashScreen> {
   @override
   void initState() {
     super.initState();
-    // Navigate to Home after a delay
-    Future.delayed(const Duration(seconds: 3), () {
-      Navigator.pushReplacement(
-        context,
-        MaterialPageRoute(builder: (context) => const Home()),
+    
+    // Set a timer to navigate to MainScreen after 3 seconds
+    Timer(const Duration(seconds: 3), () {
+      Navigator.of(context).pushReplacement(
+        MaterialPageRoute(builder: (context) => const MainScreen()),
       );
     });
   }
@@ -27,9 +28,8 @@ class _SplashScreenState extends State<SplashScreen> {
       backgroundColor: Colors.white,
       body: Center(
         child: Image.asset(
-          'assets/bhutan_news_logo.png', // Add your logo path here
-          height: 100, // Adjust the size as needed
-          width: 100,
+          'assets/bhutan_news_logo.png', // Replace with your logo path
+          height: 100,
         ),
       ),
     );
