@@ -1,18 +1,18 @@
 import 'package:flutter/material.dart';
-import 'package:bhutan_news_app_flutter/home.dart';
-import 'package:bhutan_news_app_flutter/main_screen.dart';
+import 'package:bhutan_news_app_flutter/splash_activity.dart'; // Import the SplashScreen
 
 void main() {
-  runApp(const Myapp());
+  runApp(const MyApp());
 }
-class Myapp extends StatelessWidget {
-  const Myapp({super.key});
+
+class MyApp extends StatelessWidget {
+  const MyApp({Key? key}) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
     return const MaterialApp(
-      home: MainScreen()
+      debugShowCheckedModeBanner: false,
+      home: SplashScreen(), // Start with the SplashScreen
     );
   }
 }
-

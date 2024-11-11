@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:bhutan_news_app_flutter/home.dart';
 import 'package:bhutan_news_app_flutter/video_tab.dart';
-import 'package:bhutan_news_app_flutter/profile_tab.dart';
+import 'package:bhutan_news_app_flutter/book_mark.dart';
+import 'NewsItem.dart';
 class MainScreen extends StatefulWidget {
   const MainScreen({super.key});
 
@@ -14,7 +15,7 @@ class _MainScreenState extends State<MainScreen> {
   final List<Widget> _pages = [
     Home(),
     VideoTab(),
-    ProfileTab(),
+    BookMarkTab( ),
   ];
   void _onItemTapped(int index){
     setState(() {
@@ -43,8 +44,8 @@ class _MainScreenState extends State<MainScreen> {
               label: 'Video',
             ),
             BottomNavigationBarItem(
-              icon: Icon(Icons.person),
-              label: 'Profile',
+              icon: Icon(Icons.bookmark),
+              label: 'BookMarked',
             ),
           ],
         ),

@@ -4,7 +4,7 @@ import 'package:html/parser.dart' as html_parser;
 import 'package:bhutan_news_app_flutter/data/newsItem.dart';
 import 'package:bhutan_news_app_flutter/WebScreen/webScreenActivity.dart';
 import 'dart:async';
-
+import 'NewsItem.dart';
 class HomeTab extends StatefulWidget {
   const HomeTab({super.key});
 
@@ -14,7 +14,7 @@ class HomeTab extends StatefulWidget {
 
 class _HomeTabState extends State<HomeTab> {
   List<NewsItem> newsItems =
-      []; // List to hold news data (title, image, description, link)
+      [];// List to hold news data (title, image, description, link)
   bool isLoading = false; // To manage the loading state
   // Function to scrape news data from the website
   Future<void> scrapeNews() async {
@@ -24,9 +24,16 @@ class _HomeTabState extends State<HomeTab> {
 
     final response = await http.get(
         Uri.parse('https://kuenselonline.com/')); // Fetch HTML from Kuensel
-
-    if (response.statusCode == 200) {
-      var document = html_parser.parse(response.body); // Parse the HTML content
+    final response_2 = await http
+        .get(Uri.parse("https://thebhutanese.bt/category/headline-stories/"));
+    final response_3 = await http.get(Uri.parse("https://thebhutanese.bt/"));
+    if (response.statusCode == 200 &&
+        response_2.statusCode == 200 &&
+        response_3.statusCode == 200) {
+      var document = html_parser.parse(response.body);
+      var document2 = html_parser.parse(response_2.body);
+      var document3 = html_parser.parse(response_3.body);
+      // Parse the HTML content
 
       // Extract news articles from Kuensel's top stories section
       final topStoriesSection = document.querySelector('div.top-stories');
@@ -65,6 +72,41 @@ class _HomeTabState extends State<HomeTab> {
           date: highlightedDate,
           newsSource: "Kuensel");
       newsItems.add(highlightedNewsItem);
+
+      //Bhutanese news headline news
+      // Extracting the Bhutanese news articles
+      final headlineArticles =
+          document2.querySelector('div.post-listing.archive-box');
+      final headlineMedia =
+          headlineArticles?.querySelectorAll('article.item-list') ?? [];
+
+      for (var article in headlineMedia) {
+        final title = article.querySelector('h2.post-box-title')?.text.trim() ??
+            'No title';
+        final date =
+            article.querySelector('span.tie-date')?.text.trim() ?? 'No Date';
+        final description = article.querySelector('div.entry p')?.text.trim() ??
+            'No Description';
+        final newsUrl =
+            article.querySelector('h2.post-box-title a')?.attributes['href'] ??
+                'No url';
+        final imageUrl = article
+                .querySelector('div.post-thumbnail img')
+                ?.attributes['src'] ??
+            'No image url';
+
+        // Create a NewsItem for each article and add to newsItems list
+        final newsItem = NewsItem(
+          title: title,
+          imageUrl: imageUrl,
+          description: description,
+          link: newsUrl,
+          date: date,
+          newsSource: "From The Bhutanese News",
+        );
+
+        newsItems.add(newsItem);
+      }
 
       // For the kuensel Editorial news highlight
       final editorialHighlight = editorialSection?.querySelector("div.row");
@@ -114,7 +156,7 @@ class _HomeTabState extends State<HomeTab> {
           imageUrl = 'https://kuenselonline.com' + imageUrl;
         }
         return NewsItem(
-            topic: "Top Stories",
+            topic: "",
             title: title,
             imageUrl: imageUrl,
             description: description,
@@ -123,10 +165,45 @@ class _HomeTabState extends State<HomeTab> {
             newsSource: "Kuensel");
       }).toList());
       // For the editorial news under the media body
-      final editorialArticle =
-          editorialSection?.querySelectorAll('div.media-body') ?? [];
+
       // Add Editorial news item
       newsItems.add(editorialHighlightedNewsItem);
+      // Extracting the editorial section from the Bhutanese news
+      final bhutaneseEditorialSection =
+          document3.querySelector("section.cat-box.column2.tie-cat-27");
+
+      // Highlighted news for the Bhutanese editorial section
+      final bhutaneseHighlighted =
+          bhutaneseEditorialSection?.querySelector("li.first-news");
+      final bhutaneseHighlightedTitle = bhutaneseHighlighted
+              ?.querySelector("h2.post-box-title")
+              ?.text
+              .trim() ??
+          "No title";
+      final bhutaneseHighlightedDate =
+          bhutaneseHighlighted?.querySelector("span.tie-date")?.text.trim() ??
+              "No date";
+      final bhutaneseHighlightedDescription =
+          bhutaneseHighlighted?.querySelector("div.entry p")?.text.trim() ??
+              "No Description";
+      final bhutaneseHighlightedNewsUrl = bhutaneseHighlighted
+              ?.querySelector("h2.post-box-title a")
+              ?.attributes['href'] ??
+          "No news url";
+      // Create a NewsItem object and add it to the list
+      newsItems.add(NewsItem(
+        topic: "",
+        title: bhutaneseHighlightedTitle,
+        imageUrl: "",
+        date: bhutaneseHighlightedDate,
+        description: bhutaneseHighlightedDescription,
+        link: bhutaneseHighlightedNewsUrl,
+        newsSource: "From The Bhutanese News",
+      ));
+
+      // Kuensel editorial news article
+      final editorialArticle =
+          editorialSection?.querySelectorAll('div.media-body') ?? [];
       newsItems.addAll(editorialArticle.map((article) {
         final titleElement = article.querySelector('h5.post-title a');
         final title = titleElement?.text.trim() ?? 'No Title';
@@ -135,20 +212,15 @@ class _HomeTabState extends State<HomeTab> {
             article.querySelector("p.post-date")?.text.trim() ?? "No Date";
         final descriptionElement = article.querySelector('p.post-date + p');
         final description = descriptionElement?.text.trim() ?? 'No Description';
-        final imageElement = article.querySelector('div.featured-img img');
-        String? imageUrl = imageElement?.attributes['src'] ?? '';
-        // Check if the image URL is relative and convert to absolute
-        if (imageUrl.isNotEmpty && imageUrl.startsWith('/')) {
-          imageUrl = 'https://kuenselonline.com' + imageUrl;
-        }
         return NewsItem(
             title: title,
-            imageUrl: imageUrl,
             description: description,
+            imageUrl: '',
             link: link,
             date: date,
             newsSource: "Kuensel");
       }));
+
       //Extracting Sports and Features sections from Kuensel
       final sportsSections = document.querySelectorAll("div.sports");
       for (int index = 0; index < sportsSections.length; index++) {
@@ -176,7 +248,6 @@ class _HomeTabState extends State<HomeTab> {
                 ?.querySelector("h3.post-title a")
                 ?.attributes['href'] ??
             '';
-
         newsItems.add(NewsItem(
             topic: sectionTitle,
             title: featureHighlightedTitle,
@@ -185,7 +256,41 @@ class _HomeTabState extends State<HomeTab> {
             link: featureHighlightedNewsUrl,
             date: featureHighlightedDate,
             newsSource: "Kuensel"));
+        // Extracting the news form the bhutanese news
+        if (index == 0) {
+          // Extracting the feature section from the Bhutanese news
+          final featureSectionBhutaneseNews =
+              document3.querySelector("section.cat-box.list-box.tie-cat-35");
 
+          // Highlighted news for the Bhutanese featured section
+          final highlighted =
+              featureSectionBhutaneseNews?.querySelector("li.first-news");
+
+          final title =
+              highlighted?.querySelector("h2.post-box-title")?.text.trim() ??
+                  "No title";
+          final date =
+              highlighted?.querySelector("span.tie-date")?.text.trim() ??
+                  "No date";
+          final description =
+              highlighted?.querySelector("div.entry p")?.text.trim() ??
+                  "No Description";
+          final newsUrl = highlighted
+                  ?.querySelector("h2.post-box-title a")
+                  ?.attributes['href'] ??
+              "No news url";
+
+          // Creating a NewsItem and adding it to the list
+          newsItems.add(NewsItem(
+            topic: "",
+            title: title,
+            imageUrl: '',
+            date: date,
+            description: description,
+            link: newsUrl,
+            newsSource: "From The Bhutanese News",
+          ));
+        }
         // Extract the media body from the sports section
         final featureMediaArticles =
             sportsSection.querySelectorAll("div.media-body") ?? [];
@@ -212,6 +317,7 @@ class _HomeTabState extends State<HomeTab> {
               newsSource: "Kuensel"));
         }
       }
+
       // Extract Business section from Kuensel
       final businessSections = document.querySelectorAll("div.business");
 
@@ -264,6 +370,42 @@ class _HomeTabState extends State<HomeTab> {
             link: businessHighlightedNewsUrl,
             date: businessHighlightedDate,
             newsSource: "Kuensel"));
+
+        //Extracting from the bhutanese news
+        // Select the business section
+        final bhutaneseBusinessSection =
+            document3.querySelector("section.cat-box.list-box.tie-cat-5");
+        // Create a NewsItem and add it to the list
+        if (index == 0) {
+          // Get the highlighted article within the business section
+          final highlighted =
+              bhutaneseBusinessSection?.querySelector("li.first-news");
+
+          // Extract information from the highlighted article
+          final title =
+              highlighted?.querySelector("h2.post-box-title")?.text.trim() ??
+                  "No title";
+          final date =
+              highlighted?.querySelector("span.tie-date")?.text.trim() ??
+                  "No date";
+
+          final description =
+              highlighted?.querySelector("div.entry p")?.text.trim() ??
+                  "No Description";
+          final newsUrl = highlighted
+                  ?.querySelector("h2.post-box-title a")
+                  ?.attributes['href'] ??
+              "No news url";
+          newsItems.add(NewsItem(
+            topic: "Business",
+            title: title,
+            imageUrl: "", // Update with actual image URL if available
+            date: date,
+            description: description,
+            link: newsUrl,
+            newsSource: "From The Bhutanese News",
+          ));
+        }
 
         // Extracting other articles from the business section
         final businessMediaArticles =
@@ -323,6 +465,39 @@ class _HomeTabState extends State<HomeTab> {
               date: date,
               newsSource: "Kuensel"));
         }
+        // Select the opinion section
+        final opinionSectionBhutanese = document3
+            .querySelector("section.cat-box.column2.tie-cat-4.last-column");
+
+        // Get the highlighted article within the opinion section
+        final highlighted =
+            opinionSectionBhutanese?.querySelector("li.first-news");
+
+        // Extract information from the highlighted article
+        final titleBhutanese =
+            highlighted?.querySelector("h2.post-box-title")?.text.trim() ??
+                "No title";
+        final dateBhutanese =
+            highlighted?.querySelector("span.tie-date")?.text.trim() ??
+                "No date";
+        final descriptionBhutanese =
+            highlighted?.querySelector("div.entry p")?.text.trim() ??
+                "No Description";
+        final newsUrlBhutanese = highlighted
+                ?.querySelector("h2.post-box-title a")
+                ?.attributes['href'] ??
+            "No news url";
+
+        // Add the news item to the list
+        newsItems.add(NewsItem(
+          topic: "",
+          title: titleBhutanese,
+          imageUrl: "", // Update with actual image URL if available
+          date: dateBhutanese,
+          description: descriptionBhutanese,
+          link: newsUrlBhutanese,
+          newsSource: "From The Bhutanese News",
+        ));
       }
 
       setState(() {
@@ -344,147 +519,13 @@ class _HomeTabState extends State<HomeTab> {
   }
 
   Widget build(BuildContext context) {
-    return Scaffold(
+   return Scaffold(
       backgroundColor: Colors.white,
       body: isLoading
           ? Center(child: CircularProgressIndicator())
           : newsItems.isEmpty
               ? Center(child: Text('No news found'))
-              : ListView.builder(
-                  itemCount: newsItems.length,
-                  itemBuilder: (context, index) {
-                    final newsItem = newsItems[index];
-
-                    // Display the topic header if it’s the first item or if the topic differs from the previous item
-                    bool showTopicHeader = index == 0 ||
-                        newsItems[index].topic != newsItems[index - 1].topic;
-
-                    return Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        // Show the topic header when necessary
-                        if (showTopicHeader)
-                          Padding(
-                            padding: const EdgeInsets.symmetric(
-                                horizontal: 16, vertical: 10),
-                            child: Text(
-                              newsItem.topic,
-                              style: TextStyle(
-                                fontWeight: FontWeight.bold,
-                                fontSize: 20,
-                                color: Color.fromARGB(255, 254, 231, 27),
-                              ),
-                            ),
-                          ),
-                        InkWell(
-                          onTap: () {
-                            // Navigate to WebScreenActivity with the news link
-                            Navigator.push(
-                              context,
-                              MaterialPageRoute(
-                                builder: (context) => WebScreenActivity(
-                                  url: newsItem.link,
-                                ), // Pass the URL here
-                              ),
-                            );
-                          },
-                          child: Card(
-                            color: Colors.white,
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(15),
-                            ),
-                            elevation: 4,
-                            margin: const EdgeInsets.symmetric(
-                                horizontal: 16, vertical: 8),
-                            child: Padding(
-                              padding: const EdgeInsets.all(8),
-                              child: Row(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  // Image section (only show if imageUrl is not empty)
-                                  if (newsItem.imageUrl.isNotEmpty)
-                                    ClipRRect(
-                                      borderRadius: BorderRadius.circular(10),
-                                      child: Image.network(
-                                        newsItem.imageUrl,
-                                        width: 80,
-                                        height: 80,
-                                        fit: BoxFit.cover,
-                                      ),
-                                    ),
-                                  if (newsItem.imageUrl.isNotEmpty)
-                                    const SizedBox(width: 10),
-
-                                  // Text section
-                                  Expanded(
-                                    child: Column(
-                                      crossAxisAlignment:
-                                          CrossAxisAlignment.start,
-                                      children: [
-                                        Text(
-                                          newsItem.title,
-                                          style: const TextStyle(
-                                            fontWeight: FontWeight.bold,
-                                            fontSize: 16,
-                                          ),
-                                          maxLines: 1,
-                                          overflow: TextOverflow.ellipsis,
-                                        ),
-                                        const SizedBox(height: 5),
-                                        Text(
-                                          newsItem.description,
-                                          style: TextStyle(
-                                            color: Colors.grey[600],
-                                          ),
-                                          maxLines: 2,
-                                          overflow: TextOverflow.ellipsis,
-                                        ),
-                                        const SizedBox(height: 5),
-
-                                        // Date and Source
-                                        Row(
-                                          mainAxisAlignment:
-                                              MainAxisAlignment.spaceBetween,
-                                          children: [
-                                            Text(
-                                              newsItem.date,
-                                              style: TextStyle(
-                                                color: Colors.grey[500],
-                                                fontSize: 12,
-                                              ),
-                                            ),
-                                            Text(
-                                              newsItem.newsSource,
-                                              style: TextStyle(
-                                                color: Colors.grey[500],
-                                                fontSize: 12,
-                                              ),
-                                            ),
-                                          ],
-                                        ),
-                                        const SizedBox(height: 5),
-
-                                        // Like icon
-                                        const Align(
-                                          alignment: Alignment.bottomRight,
-                                          child: Icon(
-                                            Icons.thumb_up_alt_outlined,
-                                            size: 20,
-                                            color: Colors.grey,
-                                          ),
-                                        ),
-                                      ],
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ),
-                          ),
-                        ),
-                      ],
-                    );
-                  },
-                ),
+              : NewsList(newsItems: newsItems),
     );
   }
 }
